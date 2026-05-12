@@ -1,5 +1,8 @@
 # 🚀 NASA Space Explorer
 
+
+**Live Demo:** https://nasa-space-explore.streamlit.app/
+
 A full-stack AI web application that integrates real-time NASA public APIs with dynamic Large Language Model (LLM) explanations. Built with Python and Streamlit, this app translates complex space data into language anyone can understand, from a curious 10-year-old to a seasoned space researcher.
 
 ![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)
