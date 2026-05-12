@@ -138,7 +138,7 @@ def get_apod(chosen_date: str = ""):
     if chosen_date:
         url += f"&date={chosen_date}"
     try:
-        response = requests.get(url, timeout=10)
+        response = requests.get(url, timeout=30)
         response.raise_for_status()
         return response.json()
     except Exception as e:
@@ -153,7 +153,7 @@ def get_asteroids(target_date=None):
     date_str = target_date.isoformat()
     url   = f"https://api.nasa.gov/neo/rest/v1/feed?start_date={date_str}&end_date={date_str}&api_key={NASA_KEY}"
     try:
-        response = requests.get(url, timeout=10)
+        response = requests.get(url, timeout=30)
         response.raise_for_status()
         data  = response.json()
         all_objects = []
@@ -179,22 +179,20 @@ def get_mars_photos(target_date=None):
     if target_date is None:
         target_date = date.today()
     date_str = target_date.isoformat()
-    # Try the specific date first, if empty, it'll fall back naturally
     url = f"https://api.nasa.gov/mars-photos/api/v1/rovers/curiosity/photos?earth_date={date_str}&api_key={NASA_KEY}"
     try:
-        response = requests.get(url, timeout=10)
+        response = requests.get(url, timeout=30)
         response.raise_for_status()
         data = response.json()
         photos = data.get("photos", [])
-        if not photos: # If no photos for exact date, get latest
+        if not photos:
             url = f"https://api.nasa.gov/mars-photos/api/v1/rovers/curiosity/latest_photos?api_key={NASA_KEY}"
-            response = requests.get(url, timeout=10)
+            response = requests.get(url, timeout=30)
             response.raise_for_status()
             data = response.json()
             photos = data.get("latest_photos", [])
         return photos[:6]
     except Exception as e:
-        # Fallback to static data when NASA API is down
         return [
             {
                 "img_src": "https://mars.nasa.gov/msl-raw-images/proj/msl/redops/ods/surface/sol/01000/opgs/edr/fcam/FLB_486265257EDR_F0481570FHAZ00323M_.JPG",
@@ -216,17 +214,15 @@ def get_epic_image(target_date=None):
     if target_date is None:
         target_date = date.today()
     date_str = target_date.isoformat()
-    # Try fetching images specifically for the selected date
     url  = f"https://api.nasa.gov/EPIC/api/natural/date/{date_str}?api_key={NASA_KEY}"
     try:
-        response = requests.get(url, timeout=10)
+        response = requests.get(url, timeout=30)
         response.raise_for_status()
         data = response.json()
         
-        # If no images on that exact date, get the most recent ones
         if not data or len(data) == 0:
              url  = f"https://api.nasa.gov/EPIC/api/natural/images?api_key={NASA_KEY}"
-             response = requests.get(url, timeout=10)
+             response = requests.get(url, timeout=30)
              response.raise_for_status()
              data = response.json()
 
@@ -237,7 +233,6 @@ def get_epic_image(target_date=None):
             return img_url, img["caption"], img["date"]
         return None, None, None
     except Exception as e:
-        # Fallback to static data when NASA API is down
         return (
             "https://epic.gsfc.nasa.gov/archive/natural/2015/10/31/png/epic_1b_20151031074844.png", 
             "Earth as seen by the DSCOVR satellite (Fallback image due to NASA API outage)", 
@@ -272,13 +267,11 @@ with tab1:
         st.write("")
         load_btn = st.button("🔭 Load Photo")
 
-    # Load new photo if button is clicked OR if it's the first time
     if load_btn or "apod" not in st.session_state:
         with st.spinner("Fetching from NASA..."):
             st.session_state.apod = get_apod(str(chosen_date))
             st.session_state.last_date = chosen_date
 
-    # If the user changed the date but didn't click load, let's load it automatically
     elif "last_date" in st.session_state and st.session_state.last_date != chosen_date:
         with st.spinner("Fetching from NASA..."):
             st.session_state.apod = get_apod(str(chosen_date))
@@ -304,7 +297,7 @@ with tab1:
         st.divider()
         col_ai, col_fav = st.columns(2)
         with col_ai:
-            if st.button("🤖 Explain with AI", key="explain_apod", use_container_width=True):
+            if st.button("🤖 Explain with AI", key="explain_apod", width="stretch"):
                 with st.spinner(f"AI is explaining for a {audience}..."):
                     explanation = ai_explain(
                         apod.get("explanation", ""),
@@ -314,7 +307,7 @@ with tab1:
                 st.success("AI Explanation")
                 st.write(explanation)
         with col_fav:
-            if st.button("❤️ Save to Favorites", use_container_width=True):
+            if st.button("❤️ Save to Favorites", width="stretch"):
                 add_favorite(
                     str(chosen_date), 
                     apod.get("title", ""), 
@@ -331,7 +324,6 @@ with tab1:
 
 # ── TAB 2: ASTEROIDS ───────────────────────────────────────────────────────────
 with tab2:
-    # Use the chosen_date from Tab 1 so the asteroid date matches the APOD date
     display_date = chosen_date if 'chosen_date' in locals() else date.today()
     st.header(f"☄️ Near-Earth Asteroids — {display_date.strftime('%B %d, %Y')}")
 
@@ -350,7 +342,6 @@ with tab2:
         st.divider()
 
         st.subheader("📊 Asteroid Analysis")
-        # Convert asteroid data to pandas DataFrame for Altair chart
         if len(asteroids) > 0:
             df = pd.DataFrame(asteroids)
             
@@ -361,10 +352,9 @@ with tab2:
                     data=df.to_csv(index=False).encode('utf-8'),
                     file_name=f"nasa_asteroids_{display_date}.csv",
                     mime="text/csv",
-                    use_container_width=True
+                    width="stretch"
                 )
             
-            # Interactive scatter plot with Altair
             chart = alt.Chart(df).mark_circle().encode(
                 x=alt.X('miss_km:Q', title='Miss Distance (km)', scale=alt.Scale(zero=False)),
                 y=alt.Y('speed_kmh:Q', title='Speed (km/h)', scale=alt.Scale(zero=False)),
@@ -373,7 +363,7 @@ with tab2:
                 tooltip=['name', 'diameter_m', 'speed_kmh', 'miss_km', 'hazardous']
             ).interactive().properties(height=400)
             
-            st.altair_chart(chart, use_container_width=True)
+            st.altair_chart(chart, width="stretch")
             st.caption("🔍 Hover over the bubbles to see details. You can zoom and pan the chart!")
 
         st.divider()
@@ -390,7 +380,6 @@ with tab2:
                 c3.metric("Miss Distance", f"{int(a['miss_km']):,} km")
                 c4.metric("Status", label)
 
-                # Size comparison
                 size = a["diameter_m"]
                 if size < 50:
                     compare = "🏠 About the size of a large house"
@@ -480,22 +469,19 @@ with tab5:
     if fav_df.empty:
         st.info("You haven't saved any favorites yet! Go to the 'Picture of the Day' tab and click '❤️ Save to Favorites'.")
     else:
-        # Create a grid for the gallery
         cols = st.columns(3)
         for idx, row in fav_df.iterrows():
             with cols[idx % 3]:
                 st.subheader(row['date'])
                 if row['media_type'] == 'image':
-                    st.image(row['url'], use_container_width=True)
+                    st.image(row['url'], width="stretch")
                 else:
                     st.video(row['url'])
                 with st.expander(row['title']):
                     st.write(row['explanation'])
-                    if st.button("🗑️ Remove", key=f"del_{row['date']}", use_container_width=True):
+                    if st.button("🗑️ Remove", key=f"del_{row['date']}", width="stretch"):
                         remove_favorite(row['date'])
                         st.rerun()
 
-
 # ── FOOTER ─────────────────────────────────────────────────────────────────────
 st.divider()
-st.caption("🚀 Built with NASA Open APIs + Groq AI (Llama 3) + Streamlit · Data from NASA · AI by Groq · ₹0 cost")
