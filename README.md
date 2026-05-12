@@ -10,15 +10,6 @@ A full-stack AI web application that integrates real-time NASA public APIs with 
 
 ---
 
-## 📖 Table of Contents
-- [Project Overview](#-project-overview)
-- [Architecture & Tech Stack](#-architecture--tech-stack)
-- [Key Features](#-key-features)
-- [Local Setup & Installation](#-local-setup--installation)
-- [Engineering Lessons Learned](#-engineering-lessons-learned)
-- [Future Improvements](#-future-improvements)
-
----
 
 ## 🌌 Project Overview
 
@@ -125,10 +116,3 @@ Building this pushed me out of "tutorial hell" into dealing with real engineerin
 - [ ] Add the James Webb Space Telescope (JWST) API for deeper infra-red space imagery.
 - [ ] Cache LLM explanations in the database to reduce Groq API calls over time.
 
----
-
-## 🤝 Contributing
-Contributions, issues, and feature requests are welcome! Check the [issues page](https://github.com/yourusername/nasa_space_explorer/issues).
-
-## 📄 License
-This project is open-source and available under the [MIT License](LICENSE).
